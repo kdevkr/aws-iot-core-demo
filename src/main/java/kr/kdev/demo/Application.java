@@ -19,27 +19,21 @@ public class Application {
                 .build()) {
 
             // Check AWS Iot Data-ATS Endpoint
-            DescribeEndpointResponse endpoint = iotClient.describeEndpoint(
-                    DescribeEndpointRequest.builder()
-                            .endpointType("iot:Data-ATS").build());
+            DescribeEndpointResponse endpoint = iotClient.describeEndpoint(builder ->
+                    builder.endpointType("iot:Data-ATS"));
             log.info("Data-ATS Endpoint: {}", endpoint.endpointAddress());
 
             // Create Thing type and Thing
-            CreateThingTypeResponse thingType = iotClient.createThingType(
-                    CreateThingTypeRequest.builder()
-                            .thingTypeName("Computer").build());
-            CreateThingResponse thing = iotClient.createThing(CreateThingRequest.builder()
-                    .thingName("PC")
-                    .thingTypeName(thingType.thingTypeName())
-                    .build());
+            CreateThingTypeResponse thingType = iotClient.createThingType(builder ->
+                    builder.thingTypeName("Computer"));
+            CreateThingResponse thing = iotClient.createThing(builder ->
+                    builder.thingName("PC").thingTypeName(thingType.thingTypeName()));
             log.info("thingType: {}", thingType.thingTypeName());
             log.info("thing: {}", thing.thingName());
 
             // Create X.509 Certificate with RSA key-pair
-            CreateKeysAndCertificateResponse keysAndCertificate = iotClient.createKeysAndCertificate(
-                    CreateKeysAndCertificateRequest.builder()
-                            .setAsActive(false)
-                            .build());
+            CreateKeysAndCertificateResponse keysAndCertificate = iotClient.createKeysAndCertificate(builder ->
+                    builder.setAsActive(false));
 
             log.info("certificateArn: {}", keysAndCertificate.certificateArn());
             log.info("certificateId: {}", keysAndCertificate.certificateId());
@@ -47,50 +41,38 @@ public class Application {
             log.info("publicKey:\n{}", keysAndCertificate.keyPair().publicKey());
 
             // Attach X.509 Certificate to Thing
-            AttachThingPrincipalResponse attachThingPrincipal = iotClient.attachThingPrincipal(
-                    AttachThingPrincipalRequest.builder()
-                            .thingName(thing.thingName())
-                            .principal(keysAndCertificate.certificateArn())
-                            .build());
+            AttachThingPrincipalResponse attachThingPrincipal = iotClient.attachThingPrincipal(builder ->
+                    builder.thingName(thing.thingName()).principal(keysAndCertificate.certificateArn()));
             log.info("attachThingPrincipal: {}", attachThingPrincipal.sdkHttpResponse().isSuccessful());
 
             // Activate X.509 Certificate
-            UpdateCertificateResponse updateCertificate = iotClient.updateCertificate(
-                    UpdateCertificateRequest.builder()
-                            .certificateId(keysAndCertificate.certificateId())
-                            .newStatus(CertificateStatus.ACTIVE)
-                            .build());
+            UpdateCertificateResponse updateCertificate = iotClient.updateCertificate(builder ->
+                    builder.certificateId(keysAndCertificate.certificateId()).newStatus(CertificateStatus.ACTIVE));
             log.info("activated: {}", updateCertificate.sdkHttpResponse().isSuccessful());
 
+            // Check device connectivity status (If fleet Indexing)
+            GetThingConnectivityDataResponse thingConnectivity = iotClient.getThingConnectivityData(builder ->
+                    builder.thingName(thing.thingName()));
+            log.info("thingConnectivity: {}", thingConnectivity.connected());
+
             // Detach X.509 Certificate from Thing
-            DetachThingPrincipalResponse detachThingPrincipal = iotClient.detachThingPrincipal(
-                    DetachThingPrincipalRequest.builder()
-                            .thingName(thing.thingName())
-                            .principal(keysAndCertificate.certificateArn())
-                            .build());
+            DetachThingPrincipalResponse detachThingPrincipal = iotClient.detachThingPrincipal(builder ->
+                    builder.thingName(thing.thingName()).principal(keysAndCertificate.certificateArn()));
             log.info("detachThingPrincipal: {}", detachThingPrincipal.sdkHttpResponse().isSuccessful());
 
             // Revoke unused X.509 Certificate
-            UpdateCertificateResponse revokedCertificate = iotClient.updateCertificate(
-                    UpdateCertificateRequest.builder()
-                            .certificateId(keysAndCertificate.certificateId())
-                            .newStatus(CertificateStatus.REVOKED)
-                            .build());
+            UpdateCertificateResponse revokedCertificate = iotClient.updateCertificate(builder ->
+                    builder.certificateId(keysAndCertificate.certificateId()).newStatus(CertificateStatus.REVOKED));
             log.info("revokedCertificate: {}", revokedCertificate.sdkHttpResponse().isSuccessful());
 
             // Delete X.509 Certificate
-            DeleteCertificateResponse deleteCertificate = iotClient.deleteCertificate(
-                    DeleteCertificateRequest.builder()
-                            .certificateId(keysAndCertificate.certificateId())
-                            .forceDelete(true)
-                            .build());
+            DeleteCertificateResponse deleteCertificate = iotClient.deleteCertificate(builder ->
+                    builder.certificateId(keysAndCertificate.certificateId()).forceDelete(true));
             log.info("deleteCertificate: {}", deleteCertificate.sdkHttpResponse().isSuccessful());
 
             // Delete Thing
-            DeleteThingResponse deleteThing = iotClient.deleteThing(
-                    DeleteThingRequest.builder()
-                            .thingName(thing.thingName())
-                            .build());
+            DeleteThingResponse deleteThing = iotClient.deleteThing(builder ->
+                    builder.thingName(thing.thingName()));
             log.info("deleteThing: {}", deleteThing.sdkHttpResponse().isSuccessful());
         }
     }
