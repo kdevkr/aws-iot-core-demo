@@ -12,6 +12,7 @@ repositories {
 dependencies {
     implementation(platform("software.amazon.awssdk:bom:2.30.28"))
     implementation("software.amazon.awssdk:iot")
+    implementation("software.amazon.awssdk.iotdevicesdk:aws-iot-device-sdk:1.23.0")
     implementation("software.amazon.awssdk:arns")
     implementation("ch.qos.logback:logback-core:1.5.17")
     implementation("ch.qos.logback:logback-classic:1.5.17")
